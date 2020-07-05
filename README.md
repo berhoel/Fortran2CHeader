@@ -2,7 +2,7 @@ Fortran2CHeader
 ===============
 
 Python based tool to generate Cython `pxd` and C/C++ header file from
-Fortran file using `C_ISO_BINDINGS`. To user from Python `setup.py`
+Fortran file using `ISO_C_BINDINGS`. To user from Python `setup.py`
 file use
 
 ```python
