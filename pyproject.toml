@@ -7,7 +7,7 @@ exclude = ["**/.#*.py", "**/#*.py#"]
 
 authors = ["Berthold Höllmann <berthold@xn--hllmanns-n4a.de>"]
 license = "MIT"
-readme = "README.md"
+readme = "README.rst"
 homepage = "https://python.höllmanns.de/Fortran2CHeader/"
 
 [tool.poetry.dependencies]
