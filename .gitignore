@@ -27,3 +27,5 @@
 **/*.pyc
 venv/
 *.py,cover
+/poetry.lock
+/.envrc

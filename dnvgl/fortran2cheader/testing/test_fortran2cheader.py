@@ -1,69 +1,72 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Unit tests for Fortran2CHeader.
-"""
+"""Unit tests for Fortran2CHeader."""
 
-from __future__ import (
-    division, print_function, absolute_import, unicode_literals)
-
-# Standard libraries.
 import re
 
-# Third party libraries.
-from six.moves import StringIO as _StringIO
+import pytest
 
-# DNV GL libraries.
-from dnvgl.fortran2cheader import (
-    _ARGS, _BIND, _VARTYPE, _SUBROUTINE, Fortran2CHeader)
+from dnvgl.fortran2cheader import _ARGS, _BIND, _VARTYPE, _SUBROUTINE, Fortran2CHeader
 
-# ID: $Id$"
-__date__ = "$Date$"[6:-1]
-__version__ = "$Revision$"[10:-1]
-__author__ = "`Berthold Höllmann <berthold.hoellmann@dnvgl.com>`__"
+__date__ = "2024/10/20 17:59:20 hoel"
 __copyright__ = "Copyright © 2014 by DNV GL SE"
 
 
-class hStringIO(_StringIO):
-    name = 'test.h'
+@pytest.fixture
+def hStringIO(tmp_path):
+    return tmp_path / "test.h"
 
 
-class pxdStringIO(_StringIO):
-    name = 'test.pxd'
+@pytest.fixture
+def pxdStringIO(tmp_path):
+    return tmp_path / "test.pxd"
 
 
-class mlist(list):
-    name = 'test.h'
+@pytest.fixture
+def mlist(tmp_path):
+    return tmp_path / "test.h"
 
 
 def test_c_int():
     res = _VARTYPE.match("INTEGER(C_INT), INTENT(IN), VALUE :: iUnit")
     assert res.groupdict() == {
-        'kind': 'C_INT', 'ftype': 'INTEGER', 'args': 'iUnit',
-        'modifier': ', INTENT(IN), VALUE ', 'length': None}
+        "kind": "C_INT",
+        "ftype": "INTEGER",
+        "args": "iUnit",
+        "modifier": ", INTENT(IN), VALUE ",
+        "length": None,
+    }
 
 
 def test_character_1():
     res = _VARTYPE.match("character(kind=c_char), intent(in) :: s(*)")
     assert res.groupdict() == {
-        'kind': 'c_char', 'ftype': 'character', 'args': 's',
-        'modifier': ', intent(in) ', 'length': None}
+        "kind": "c_char",
+        "ftype": "character",
+        "args": "s",
+        "modifier": ", intent(in) ",
+        "length": None,
+    }
 
 
 def test_character_2():
-    res = _VARTYPE.match(
-        "character(kind=c_char,len=1), intent(in) :: s(*)")
+    res = _VARTYPE.match("character(kind=c_char,len=1), intent(in) :: s(*)")
     assert res.groupdict() == {
-        'kind': 'c_char', 'ftype': 'character', 'args': 's',
-        'modifier': ', intent(in) ', 'length': '1'}
+        "kind": "c_char",
+        "ftype": "character",
+        "args": "s",
+        "modifier": ", intent(in) ",
+        "length": "1",
+    }
 
 
 def test_character_3():
-    res = _VARTYPE.match(
-        "character(kind=c_char,len=1), dimension(*), intent(in) :: s")
+    res = _VARTYPE.match("character(kind=c_char,len=1), dimension(*), intent(in) :: s")
     assert res.groupdict() == {
-        'kind': 'c_char', 'ftype': 'character', 'args': 's',
-        'modifier': ', dimension(*), intent(in) ', 'length': '1'}
+        "kind": "c_char",
+        "ftype": "character",
+        "args": "s",
+        "modifier": ", dimension(*), intent(in) ",
+        "length": "1",
+    }
 
 
 def test_args_1():
@@ -78,7 +81,7 @@ def test_subr_1():
     assert _SUBROUTINE.match("subroutine pstr(s) bind(c,name='pstr')")
 
 
-def test_subr_2():
+def test_subr_2(mlist, hStringIO, pxdStringIO):
     i_data = """
 subroutine pstr(s) bind(c,name='pstr')
   use iso_c_binding ! C bindings
@@ -86,7 +89,7 @@ subroutine pstr(s) bind(c,name='pstr')
      & s(*)
 end subroutine pstr
 """
-    exp = ("""\
+    exp = """\
 /*
   test.h
   Header file generated from parsing ISO_C_BINDING information
@@ -110,14 +113,13 @@ extern "C" {
  */
 extern void pstr(const char* s);
 
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* TEST_H */""")
+#endif /* TEST_H */"""
 
-    exp_pxd = """\
+    exp_pxd = """#
 # test.pxd
 # Cython Header file generated from parsing ISO_C_BINDING information
 # from <generator object <genexpr> at 0x????????????>.
@@ -131,20 +133,17 @@ cdef extern from "test.h" nogil:
 #     subroutine pstr(s) bind(c,name='pstr')
     void pstr(const char* s)
 """
-    i_data = mlist(i for i in i_data.split("\n"))
-    i_data.name = 'test.h'
-    data = Fortran2CHeader(i_data, signed_to_unsigned_char=True)
+    mlist.write_text(i_data)
+    data = Fortran2CHeader(mlist, signed_to_unsigned_char=True)
     data.parse()
-    res = hStringIO()
-    data.gen_chead(res)
-    res = res.getvalue()
+    data.gen_chead(hStringIO)
+    res = hStringIO.read_text()
     for i, j in zip(res.split("\n"), exp.split("\n")):
         if i.startswith("  Generated"):
             continue
         assert i == j
-    res = pxdStringIO()
-    data.gen_pxd(res)
-    res = res.getvalue()
+    data.gen_pxd(pxdStringIO)
+    res = pxdStringIO.read_text()
     for i, j in zip(res.split("\n"), exp_pxd.split("\n")):
         if i.startswith("# from "):
             continue
@@ -153,14 +152,14 @@ cdef extern from "test.h" nogil:
         assert i == j
 
 
-def test_subr_complex():
+def test_subr_complex(mlist, hStringIO, pxdStringIO):
     i_data = """
 subroutine pstr(s) bind(c,name='pstr')
   use iso_c_binding ! C bindings
   COMPLEX(C_DOUBLE_COMPLEX) :: s
 end subroutine pstr
 """
-    exp = ("""\
+    exp = """\
 /*
   test.h
   Header file generated from parsing ISO_C_BINDING information
@@ -184,14 +183,13 @@ extern "C" {
  */
 extern void pstr(double _Complex s);
 
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* TEST_H */""")
+#endif /* TEST_H */"""
 
-    exp_pxd = """\
+    exp_pxd = """#
 # test.pxd
 # Cython Header file generated from parsing ISO_C_BINDING information
 # from <generator object <genexpr> at 0x????????????>.
@@ -205,30 +203,21 @@ cdef extern from "test.h" nogil:
 #     subroutine pstr(s) bind(c,name='pstr')
     void pstr(double complex s)
 """
-    i_data = mlist(i for i in i_data.split("\n"))
-    i_data.name = 'test.h'
-    data = Fortran2CHeader(i_data, signed_to_unsigned_char=True)
+    mlist.write_text(i_data)
+    data = Fortran2CHeader(mlist, signed_to_unsigned_char=True)
     data.parse()
-    res = hStringIO()
-    data.gen_chead(res)
-    res = res.getvalue()
+    data.gen_chead(hStringIO)
+    res = hStringIO.read_text()
     for i, j in zip(res.split("\n"), exp.split("\n")):
         if i.startswith("  Generated"):
             continue
         assert i == j
-    res = pxdStringIO()
-    data.gen_pxd(res)
-    res = res.getvalue()
+    res = ()
+    data.gen_pxd(pxdStringIO)
+    res = pxdStringIO.read_text()
     for i, j in zip(res.split("\n"), exp_pxd.split("\n")):
         if i.startswith("# from "):
             continue
         if i.startswith("# Generated by"):
             continue
         assert i == j
-
-
-# Local Variables:
-# mode: python
-# ispell-local-dictionary: "english"
-# compile-command: "cd ../../../;python setup.py test"
-# End:
