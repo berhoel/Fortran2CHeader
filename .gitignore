@@ -29,3 +29,5 @@ venv/
 *.py,cover
 /poetry.lock
 /.envrc
+/doc/_build/
+/doc/_tmp/

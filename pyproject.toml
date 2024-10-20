@@ -8,12 +8,14 @@ exclude = ["**/.#*.py", "**/#*.py#"]
 authors = ["Berthold Höllmann <berthold@xn--hllmanns-n4a.de>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://python.höllmanns.de/Fortran2CHeader/"
 
 [tool.poetry.dependencies]
 python = "^3.11"
 rich = "^13.9.2"
 
 [tool.poetry.group.dev.dependencies]
+berhoel-sphinx-settings = { git = "https://gitlab.com/berhoel/python/berhoel-sphinx-settings.git", rev = "main" }
 black = "*"
 ipython = "*"
 mypy = "*"
@@ -126,13 +128,7 @@ deps =
 whitelist_externals = poetry
 
 commands =
-   pytest                                                    \
-        --doctest-modules                                    \
-        --junitxml=ctitools-report.xml                       \
-        --cov dnvgl/                                       \
-        --cov-report term --cov-report html --cov-report xml \
-        --cov-report annotate --cov-report term-missing      \
-        dnvgl
+   pytest
 """
 
 [tool.pytest.ini_options]
