@@ -1,4 +1,0 @@
-DNVGLPyFramework
-pytest
-pytest-cov
-sphinx

@@ -1,3 +1,0 @@
-include .isort.cfg
-include tox.ini
-include version.txt
