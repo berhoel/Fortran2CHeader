@@ -12,6 +12,7 @@ file use
 
 ```python
 ...
+from pathlib import Path
 from dnvgl.fortran2cheader import Fortran2CHeader
 
 HEADER = Fortran2CHeader(
@@ -20,8 +21,7 @@ HEADER = Fortran2CHeader(
 HEADER.parse()
 CHEAD_NAME = 'xx.h'
 PXD_NAME = 'xx.pxd'
-HEADER.gen_output(CHEAD_NAME, PXD_NAME)
-
+HEADER.gen_output(Path(CHEAD_NAME), Path(PXD_NAME))
 ...
 ```
 
