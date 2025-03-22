@@ -1,43 +1,67 @@
-[tool.poetry]
+[project]
+
 name = "Fortran2CHeader"
-version = "0.6.6"
+
 description = "Generate a C/C++ header file from a Fortran source file."
+
+authors = [
+    { name = "Berthold Höllmann", email = "berthold@xn--hllmanns-n4a.de" }
+]
+maintainers = [
+    { name = "Berthold Höllmann", email = "berthold@xn--hllmanns-n4a.de" }
+]
+license = { text = "MIT" }
+
+repository = "https://github.com/berhoel/Fortran2CHeader"
+homepage = "https://python.höllmanns.de/Fortran2CHeader/"
+documentation = "https://python.höllmanns.de/Fortran2CHeader/"
+readme = "README.rst"
+
+requires-python = ">=3.10,<4.0"
+
+dynamic = [
+    "version",
+    "classifiers",
+    "dependencies"
+]
+
+[project.scripts]
+fortran2cheader = "dnvgl.fortran2cheader:main"
+
+[tool.poetry]
+version = "0.6.6"
+
 packages = [{ include = "dnvgl" }]
 exclude = ["**/.#*.py", "**/#*.py#"]
 
-authors = ["Berthold Höllmann <berthold@xn--hllmanns-n4a.de>"]
-license = "MIT"
-readme = "README.md"
-homepage = "https://python.höllmanns.de/Fortran2CHeader/"
-
 [tool.poetry.dependencies]
-python = "^3.11"
 rich = "^13.9.2"
 
 [tool.poetry.group.dev.dependencies]
-berhoel-sphinx-settings = { git = "https://gitlab.com/berhoel/python/berhoel-sphinx-settings.git", rev = "main" }
 black = "*"
 ipython = "*"
+isort = "*"
 mypy = "*"
 pdbp = "*"
+ruff = "*"
+
+[tool.poetry.group.test.dependencies]
 pytest = "*"
-pytest-benchmark = "*"
-pytest-black-ng = "*"
+pytest-benchmark = { extras = ["histogram"], version = "*" }
 pytest-cache = "*"
 pytest-cov = "*"
-pytest-isort = "*"
 pytest-mock = "*"
 pytest-ruff = "*"
 pytest-runner = "*"
 pytest-sugar = "*"
 rope = "*"
-ruff = "*"
-sphinx-argparse-cli = "*"
 tox = "*"
-xdoctest = "*"
 
-[tool.poetry.scripts]
-fortran2cheader = "dnvgl.fortran2cheader:main"
+[tool.poetry.group.doc.dependencies]
+berhoel-sphinx-settings = { git = "https://gitlab.com/berhoel/python/berhoel-sphinx-settings.git", rev = "main" }
+doc8 = "*"
+sphinx-argparse-cli = "*"
+xdoctest = "*"
 
 [tool.isort]
 dedup_headings = true
@@ -54,15 +78,18 @@ known_first_party = ["dnvgl"]
 known_third_party = ["pytest"]
 
 [tool.ruff]
-namespace-packages = ["docs", 'dnvgl']
+namespace-packages = ["dnvgl"]
 line-length = 88
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["ANN101", "D211", "D213", "RUF200", "ISC001", "COM812"]
+ignore = ["D211", "D213", "RUF200", "ISC001", "COM812"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google"
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"docs/**.py" = ["INP001"]
 
 [tool.ruff.format]
 # Enable auto-formatting of code examples in docstrings. Markdown,
@@ -83,6 +110,7 @@ docstring-code-line-length = "dynamic"
 force-sort-within-sections = true
 force-wrap-aliases = true
 combine-as-imports = true
+required-imports = ["from __future__ import annotations"]
 section-order = [
   "future",
   "standard-library",
@@ -101,67 +129,53 @@ docstring-quotes = "double"
 mypy-init-return = true
 
 [tool.mypy]
+packages = ["dnvgl"]
 mypy_path = "$MYPY_CONFIG_FILE_DIR/.stubs/"
+explicit_package_bases = true
 
 [tool.tox]
-legacy_tox_ini = """
+requires = ["tox>=4.19"]
+env_list = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
 
-[tox]
-isolated_build = true
-skip_missing_interpreters = true
-envlist = py{39, 310, 311, 312, 313}
-
-[testenv]
-deps =
-   pdbpp
-   pytest
-   pytest-benchmark
-   pytest-cov
-   pytest-mock
-   pytest-ruff
-   pytest-runner
-   pytest-sugar
-   rope
-   toml
-   xdoctest
-
-whitelist_externals = poetry
-
-commands =
-   pytest
-"""
+[tool.tox.env_run_base]
+description = "Run test under {base_python}"
+deps = [
+  "pdbpp",
+  "pytest",
+  "pytest-benchmark[histogram]",
+  "pytest-cov",
+  "pytest-mock",
+  "pytest-ruff",
+  "pytest-runner",
+  "pytest-sugar",
+  "rope",
+  "toml",
+  "xdoctest",
+]
+allowlist_externals = ["poetry"]
+commands = [["poetry", "run", "pytest"]]
 
 [tool.pytest.ini_options]
 junit_family = "xunit2"
 doctest_encoding = "UTF-8"
 minversion = "7.0"
 addopts = [
-    "--import-mode=importlib",
-    "--doctest-modules",
-    "--ff",
-    "--pdb",
-    "--cov=dnvgl",
-    "--cov-report=term",
-    "--cov-report=html",
-    "--cov-branch",
-    "--ruff",
-    "--verbose", "--verbose", "--verbose",
-    #"--cov-config .coveragerc",
-    "--cov-report=term-missing",
-    "--cov-report=xml",
-    "--cov-report=annotate",
-    "--doctest-modules",
-    "--capture=no",
-    "--junitxml=pytest_main.xml",
-    "--ignore=doc",
-    "--ignore=build_exe",
-    "--ignore=.svn",
-    "--ignore=.venv",
-    "--ignore=data",
-    "--ignore=htmlcov",
-    "--ignore=__pycache__"]
-testpaths = ["dnvgl"]
+  "--benchmark-histogram=plots/benchmark-histogram",
+  "--benchmark-compare",
+  "--doctest-modules",
+  "--ff",
+  "-s",
+  "--cov=dnvgl",
+  "--cov-report=term",
+  "--cov-report=html",
+  "--cov-branch",
+  "--ruff",
+]
+testpaths = ["berhoel"]
+
+[tool.doc8]
+ignore-path=["ctitools.egg-info", ".tox"]
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
