@@ -31,3 +31,4 @@ venv/
 /.envrc
 /doc/_build/
 /doc/_tmp/
+/docs/_tmp/
