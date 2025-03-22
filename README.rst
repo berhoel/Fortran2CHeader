@@ -13,16 +13,18 @@ file use
 .. code:: python
 
    ...
+
    from pathlib import Path
    from dnvgl.fortran2cheader import Fortran2CHeader
 
    HEADER = Fortran2CHeader(
-       data=open(os.path.join('xx.f90')),
+       data=(Path() / 'xx.f90').open(),
        signed_to_unsigned_char=False)
    HEADER.parse()
    CHEAD_NAME = 'xx.h'
    PXD_NAME = 'xx.pxd'
    HEADER.gen_output(Path(CHEAD_NAME), Path(PXD_NAME))
+
    ...
 
 Then use ``xx.pxd`` in your Cython module.
