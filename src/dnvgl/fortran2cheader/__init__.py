@@ -150,16 +150,16 @@ _SUBROUTINE = re.compile(
 
 # FUNCTION C_CALLOC(elt_count, elt_size) RESULT(ptr) BIND(C, NAME="calloc")
 _FUNCTION = re.compile(
-    r"""
+    rf"""
 ^
-(?P<prefix> .+)?? \s*
+(?P<prefix>.+)?? \s*
 (?: {casi("FUNCTION")} ) \s+
 (?P<f_name> \w+ ) \s*
 {_ARGS}
 (?: {casi("RESULT")} \s*
 [(] \s* (?P<result> .+? ) [)] ) \s*
 {_BIND}""",
-    re.VERBOSE,
+    re.VERBOSE | re.MULTILINE,
 )
 # INTEGER(C_INT), INTENT(IN), VALUE :: iUnit
 _VARTYPE = re.compile(
@@ -245,7 +245,7 @@ class FortranSourceProvider:
                 else:
                     yield line.strip()
 
-    def next(self) -> str:
+    def __next__(self) -> str:
         """Return next line."""
         line = next(self._read)
         while line.endswith("&"):
@@ -254,8 +254,6 @@ class FortranSourceProvider:
             n_line = n_line.removeprefix("&")
             line += n_line
         return line.strip()
-
-    __next__ = next
 
 
 class Comment:
@@ -327,7 +325,7 @@ class _Routine:
             self.f_kinds["integer"]["c_signed_char"] = "unsigned char"
         else:
             self.f_kinds["integer"]["c_signed_char"] = "signed char"
-        self.argdict: dict[str, list[None | str | Comment]] = {}
+        self.argdict: dict[str, list[str | Comment | None]] = {}
         self.uargs: list[str] = []
         self.comment: Comment | None = None
         self.name: str | None = None
@@ -356,15 +354,12 @@ class _Routine:
         """Add argument information to Subroutine information."""
         _ = length
         c_type = self.f_kinds.get(ftype.lower(), {}).get(kind.lower(), None)
-        intent = modifier and _INTENT.match(modifier)
-        if c_type and modifier and intent and intent.groupdict()["dir"].lower() == "in":
-            c_type = "const " + c_type
-        if (
-            c_type
-            and modifier
-            and ("value" not in modifier.lower() or "dimension" in modifier.lower())
-        ):
-            c_type += "*"
+        if c_type and modifier:
+            intent = _INTENT.match(modifier)
+            if (intent is not None) and intent.groupdict()["dir"].lower() == "in":
+                c_type = "const " + c_type
+            if "value" not in modifier.lower() or "dimension" in modifier.lower():
+                c_type += "*"
         for arg in (a.strip().upper() for a in args.split(",")):
             if arg in self.uargs:
                 self.argdict[arg][0] = c_type
@@ -401,7 +396,7 @@ FORTRAN declaration:
 class Function(_Routine):
     """Representing Fortran FUNCTIONs."""
 
-    def __init__(  # noqa:PLR0913
+    def __init__(  # noqa:PLR0913, PLR0917
         self,
         line: str,
         c_name: str,
@@ -475,7 +470,7 @@ class Fortran2CHeader:
         else:
             fname = self.input.name
         _CONSOLE.print(f"*** fortran2cheader - Parsing {fname}")
-        subr: None | _Routine = None
+        subr: _Routine | None = None
         interface = False
         self.info = []
         for i in self.data:

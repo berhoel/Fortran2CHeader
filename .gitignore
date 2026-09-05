@@ -32,3 +32,7 @@ venv/
 /doc/_build/
 /doc/_tmp/
 /docs/_tmp/
+/.direnv/
+/src/dnvgl/fortran2cheader/testing/.coverage
+/uv.lock
+/docs/_build/

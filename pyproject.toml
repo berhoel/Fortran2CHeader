@@ -2,66 +2,107 @@
 
 name = "Fortran2CHeader"
 
+version = "0.6.2"
+
 description = "Generate a C/C++ header file from a Fortran source file."
 
-authors = [
-    { name = "Berthold Höllmann", email = "berthold@xn--hllmanns-n4a.de" }
-]
-maintainers = [
-    { name = "Berthold Höllmann", email = "berthold@xn--hllmanns-n4a.de" }
-]
-license = { text = "MIT" }
-
-repository = "https://github.com/berhoel/Fortran2CHeader"
-homepage = "https://python.höllmanns.de/Fortran2CHeader/"
-documentation = "https://python.höllmanns.de/Fortran2CHeader/"
 readme = "README.rst"
 
-requires-python = ">=3.10,<4.0"
+authors = [{ name = "Berthold Höllmann", email = "berthold@xn--hllmanns-n4a.de" }]
 
-dynamic = [
-    "version",
-    "classifiers",
-    "dependencies"
+requires-python = ">=3.13,<4.0"
+
+license = {text = "MIT"}
+
+maintainers = [{ name = "Berthold Höllmann", email = "berthold@xn--hllmanns-n4a.de" }]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
+
+dependencies = ["rich>13.9.2"]
+
+[project.urls]
+Homepage = "https://python.höllmanns.de/Fortran2CHeader/"
+Repository = "https://github.com/berhoel/Fortran2CHeader"
+Documentation = "https://python.höllmanns.de/Fortran2CHeader/"
 
 [project.scripts]
 fortran2cheader = "dnvgl.fortran2cheader:main"
 
-[tool.poetry]
-version = "0.6.6"
+[dependency-groups]
+dev = [
+  "black",
+  "ipython",
+  "isort",
+  "mypy",
+  "pdbp",
+  "ruff",
+]
+test = [
+  "doc8",
+  "pytest",
+  "pytest-benchmark[histogram]",
+  "pytest-cache",
+  "pytest-cov",
+  "pytest-mock",
+  "pytest-ruff",
+  "pytest-runner",
+  "pytest-sugar",
+  "rope",
+  "tox",
+  "xdoctest",
+]
+doc = [
+  "griffe_pydantic",
+  "griffe_sphinx",
+  "griffe_typingdoc",
+  "markdown-callouts",
+  "mkdocs-click",
+  "mkdocs-llmstxt",
+  "mkdocs-material-berhoel",
+  "mkdocs-minify-plugin",
+]
 
-packages = [{ include = "dnvgl" }]
-exclude = ["**/.#*.py", "**/#*.py#"]
+[tool.uv]
+default-groups = [
+  "dev",
+  "test",
+  "doc",
+]
 
-[tool.poetry.dependencies]
-rich = "^13.9.2"
+[tool.uv.sources]
+mkdocs-material-berhoel = { git = "https://gitlab.com/berhoel/python/mkdocs-material-berhoel.git", rev = "main" }
 
-[tool.poetry.group.dev.dependencies]
-black = "*"
-ipython = "*"
-isort = "*"
-mypy = "*"
-pdbp = "*"
-ruff = "*"
+[tool.hatch.build.targets.sdist]
+module-name = ["dnvgl"]
+module-root = ""
+namespace = true
+exclude = [
+  "**/.#*.py",
+  "**/#*.py#",
+]
 
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-benchmark = { extras = ["histogram"], version = "*" }
-pytest-cache = "*"
-pytest-cov = "*"
-pytest-mock = "*"
-pytest-ruff = "*"
-pytest-runner = "*"
-pytest-sugar = "*"
-rope = "*"
-tox = "*"
+[tool.hatch.build.targets.wheel]
+module-name = ["dnvgl"]
+module-root = ""
+namespace = true
+exclude = [
+  "**/.#*.py",
+  "**/#*.py#",
+]
 
-[tool.poetry.group.doc.dependencies]
-berhoel-sphinx-settings = { git = "https://gitlab.com/berhoel/python/berhoel-sphinx-settings.git", rev = "main" }
-doc8 = "*"
-sphinx-argparse-cli = "*"
-xdoctest = "*"
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "dnvgl.fortran2cheader"
 
 [tool.isort]
 dedup_headings = true
@@ -77,26 +118,31 @@ combine_as_imports = true
 known_first_party = ["dnvgl"]
 known_third_party = ["pytest"]
 
+[tool.black]
+line-length = 88
+target-version = ['py314']
+include = '\.pyi?$'
+
 [tool.ruff]
 namespace-packages = ["dnvgl"]
 line-length = 88
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D211", "D213", "RUF200", "ISC001", "COM812"]
+ignore = [
+  "COM812", #missing-trailing-comma
+  "CPY001", # Missing copyright notice at top of file
+]
 
 [tool.ruff.lint.pydocstyle]
-convention = "numpy"
+convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "docs/**.py" = ["INP001"]
+"src/**/tests/**.py" = ["INP001"]
 
 [tool.ruff.format]
 # Enable auto-formatting of code examples in docstrings. Markdown,
-# reStructuredText code/literal blocks and doctests are all supported.
-#
-# This is currently disabled by default, but it is planned for this
-# to be opt-out in the future.
 docstring-code-format = true
 
 # Set the line length limit used when formatting code snippets in
@@ -135,7 +181,7 @@ explicit_package_bases = true
 
 [tool.tox]
 requires = ["tox>=4.19"]
-env_list = ["3.10", "3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t"]
+env_list = ["3.13", "3.13t", "3.14", "3.14t"]
 
 [tool.tox.env_run_base]
 description = "Run test under {base_python}"
@@ -152,8 +198,8 @@ deps = [
   "toml",
   "xdoctest",
 ]
-allowlist_externals = ["poetry"]
-commands = [["poetry", "run", "pytest"]]
+allowlist_externals = ["uv"]
+commands = [["uv", "run", "pytest"]]
 
 [tool.pytest.ini_options]
 junit_family = "xunit2"
@@ -162,20 +208,20 @@ minversion = "7.0"
 addopts = [
   "--benchmark-histogram=plots/benchmark-histogram",
   "--benchmark-compare",
-  "--doctest-modules",
-  "--ff",
-  "-s",
+  "--xdoctest",
+  "--xdoctest-glob=*.md",
+  "--failed-first",
+  "--capture=no",
   "--cov=dnvgl",
   "--cov-report=term",
-  "--cov-report=html",
+  "--cov-report=html:htmlcov",
   "--cov-branch",
+  "--cov-context=test",
   "--ruff",
+  "--strict-config",
+  "--strict-markers",
+  "--pyargs", "dnvgl.fortran2cheader"
 ]
-testpaths = ["berhoel"]
 
 [tool.doc8]
 ignore-path=["ctitools.egg-info", ".tox"]
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"

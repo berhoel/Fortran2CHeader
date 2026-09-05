@@ -3,8 +3,14 @@
 import re
 
 import pytest
-
-from dnvgl.fortran2cheader import _ARGS, _BIND, _VARTYPE, _SUBROUTINE, Fortran2CHeader
+from dnvgl.fortran2cheader import (
+    _ARGS,
+    _BIND,
+    _FUNCTION,
+    _SUBROUTINE,
+    _VARTYPE,
+    Fortran2CHeader,
+)
 
 __date__ = "2024/10/20 17:59:20 hoel"
 __copyright__ = "Copyright © 2014 by DNV GL SE"
@@ -27,7 +33,7 @@ def mlist(tmp_path):
 
 def test_c_int():
     res = _VARTYPE.match("INTEGER(C_INT), INTENT(IN), VALUE :: iUnit")
-    assert res.groupdict() == {
+    assert (res is not None) and res.groupdict() == {
         "kind": "C_INT",
         "ftype": "INTEGER",
         "args": "iUnit",
@@ -38,7 +44,7 @@ def test_c_int():
 
 def test_character_1():
     res = _VARTYPE.match("character(kind=c_char), intent(in) :: s(*)")
-    assert res.groupdict() == {
+    assert (res is not None) and res.groupdict() == {
         "kind": "c_char",
         "ftype": "character",
         "args": "s",
@@ -49,7 +55,7 @@ def test_character_1():
 
 def test_character_2():
     res = _VARTYPE.match("character(kind=c_char,len=1), intent(in) :: s(*)")
-    assert res.groupdict() == {
+    assert (res is not None) and res.groupdict() == {
         "kind": "c_char",
         "ftype": "character",
         "args": "s",
@@ -60,7 +66,7 @@ def test_character_2():
 
 def test_character_3():
     res = _VARTYPE.match("character(kind=c_char,len=1), dimension(*), intent(in) :: s")
-    assert res.groupdict() == {
+    assert (res is not None) and res.groupdict() == {
         "kind": "c_char",
         "ftype": "character",
         "args": "s",
@@ -78,7 +84,13 @@ def test_bind_1():
 
 
 def test_subr_1():
-    assert _SUBROUTINE.match("subroutine pstr(s) bind(c,name='pstr')")
+    assert _SUBROUTINE.search("subroutine pstr(s) bind(c,name='pstr')")
+
+
+def test_fortran_1():
+    assert _FUNCTION.search(
+        "   FUNCTION curv2(t, n, x, y, yp, sigma) RESULT(res) BIND(C, NAME='c_curv2')"
+    )
 
 
 def test_subr_2(mlist, hStringIO, pxdStringIO):
