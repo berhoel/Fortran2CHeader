@@ -2,7 +2,7 @@
 
 name = "Fortran2CHeader"
 
-version = "0.6.2"
+version = "0.6.3"
 
 description = "Generate a C/C++ header file from a Fortran source file."
 
@@ -206,13 +206,12 @@ junit_family = "xunit2"
 doctest_encoding = "UTF-8"
 minversion = "7.0"
 addopts = [
-  "--benchmark-histogram=plots/benchmark-histogram",
   "--benchmark-compare",
   "--xdoctest",
   "--xdoctest-glob=*.md",
   "--failed-first",
   "--capture=no",
-  "--cov=dnvgl",
+  "--cov=src/dnvgl/fortran2cheader",
   "--cov-report=term",
   "--cov-report=html:htmlcov",
   "--cov-branch",
@@ -224,4 +223,4 @@ addopts = [
 ]
 
 [tool.doc8]
-ignore-path=["ctitools.egg-info", ".tox"]
+ignore-path=["ctitools.egg-info", ".tox",".direnv"]

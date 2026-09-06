@@ -73,6 +73,8 @@ Translation table taken from
 +-----------+---------------------------+----------------------+
 """
 
+# Copyright (C) 2026 by Berthold Höllmann
+
 from __future__ import annotations
 
 import argparse
@@ -127,8 +129,8 @@ _BIND = rf"""{casi("BIND")}
 (?:
   (?:
     (?P<C>[Cc]) |
-    (?:{casi("NAME")} ) \s* =
-       \s* (?P<quot>[\'\"]) (?P<c_name>[\w]+) (?P=quot)
+    (?:{casi("NAME")})\s* =
+       \s*(?P<quot>[\'\"])(?P<c_name>[\w]+)(?P=quot)
   ) \s* ,? \s*
 )+
 \s* \)
@@ -425,7 +427,7 @@ FORTRAN declaration:
             self.resultN = result
         else:
             self.resultN = f_name
-        if _prefix := _TYPE.match(prefix):
+        if (prefix is not None) and (_prefix := _TYPE.match(prefix)):
             self.result = self.f_kinds.get(_prefix.group("ftype").lower(), {}).get(
                 _prefix.group("kind").lower(), None
             )
@@ -475,36 +477,34 @@ class Fortran2CHeader:
         self.info = []
         for i in self.data:
             vartype = _VARTYPE.match(i)
-            if not interface and (line := _SUBROUTINE.match(i)):
+            if not interface and (line := _SUBROUTINE.match(i.strip())):
                 if subr:
                     self.info.append(subr)
-                gdict = line.groupdict()
-                if not gdict["C"]:
                     subr = None
-                    continue
-                subr = Subroutine(
-                    signed_to_unsigned_char=self.signed_to_unsigned_char,
-                    f_name=gdict["f_name"],
-                    c_name=gdict["c_name"],
-                    args=gdict["args"].split(","),
-                    line=i,
-                )
-            elif not interface and (line := _FUNCTION.match(i)):
+                gdict = line.groupdict()
+                if gdict["C"]:
+                    subr = Subroutine(
+                        signed_to_unsigned_char=self.signed_to_unsigned_char,
+                        f_name=gdict["f_name"],
+                        c_name=gdict["c_name"],
+                        args=gdict["args"].split(","),
+                        line=i,
+                    )
+            if not interface and (line := _FUNCTION.match(i.strip())):
                 if subr:
                     self.info.append(subr)
-                gdict = line.groupdict()
-                if not gdict["C"]:
                     subr = None
-                    continue
-                subr = Function(
-                    signed_to_unsigned_char=self.signed_to_unsigned_char,
-                    f_name=gdict["f_name"],
-                    c_name=gdict["c_name"],
-                    args=gdict["args"].split(","),
-                    prefix=gdict["prefix"],
-                    result=gdict["result"],
-                    line=i,
-                )
+                gdict = line.groupdict()
+                if gdict["C"]:
+                    subr = Function(
+                        signed_to_unsigned_char=self.signed_to_unsigned_char,
+                        f_name=gdict["f_name"],
+                        c_name=gdict["c_name"],
+                        args=gdict["args"].split(","),
+                        prefix=gdict["prefix"],
+                        result=gdict["result"],
+                        line=i,
+                    )
             elif _INTERFACE.match(i):
                 interface = True
             elif _END_INTERFACE.match(i):
