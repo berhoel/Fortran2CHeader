@@ -2,16 +2,16 @@ MODULE fitpack_interf
    INTERFACE
       SUBROUTINE curv1(n, x, y, slp1, slpn, islpsw, yp, temp, sigma, ierr)
          IMPLICIT NONE
-         INTEGER(C_INT), INTENT(IN) :: n
-         REAL(C_DOUBLE), INTENT(IN), DIMENSION(n) :: x
-         REAL(C_DOUBLE), INTENT(IN), DIMENSION(n) :: y
-         REAL(C_DOUBLE), INTENT(IN) :: slp1
-         REAL(C_DOUBLE), INTENT(IN) :: slpn
-         INTEGER(C_INT), INTENT(IN) :: islpsw
-         REAL(C_DOUBLE), INTENT(OUT), DIMENSION(n) :: yp
-         REAL(C_DOUBLE), INTENT(IN), DIMENSION(n) :: temp(n)
-         REAL(C_DOUBLE), INTENT(IN) :: sigma
-         INTEGER(C_INT), INTENT(OUT):: ierr
+         INTEGER(INT), INTENT(IN) :: n
+         REAL(DOUBLE), INTENT(IN), DIMENSION(n) :: x
+         REAL(DOUBLE), INTENT(IN), DIMENSION(n) :: y
+         REAL(DOUBLE), INTENT(IN) :: slp1
+         REAL(DOUBLE), INTENT(IN) :: slpn
+         INTEGER(INT), INTENT(IN) :: islpsw
+         REAL(DOUBLE), INTENT(OUT), DIMENSION(n) :: yp
+         REAL(DOUBLE), INTENT(IN), DIMENSION(n) :: temp(n)
+         REAL(DOUBLE), INTENT(IN) :: sigma
+         INTEGER(INT), INTENT(OUT):: ierr
       END SUBROUTINE curv1
       FUNCTION curv2(t, n, x, y, yp, sigma) result(res) 
          IMPLICIT NONE
@@ -46,7 +46,7 @@ CONTAINS
       REAL(C_DOUBLE), INTENT(IN) :: slpn
       INTEGER(C_INT), INTENT(IN) :: islpsw
       REAL(C_DOUBLE), INTENT(OUT), DIMENSION(n) :: yp
-      REAL(C_DOUBLE), INTENT(IN), DIMENSION(n) :: temp(n)
+      REAL(C_DOUBLE), INTENT(IN), DIMENSION(n) :: temp
       REAL(C_DOUBLE), INTENT(IN) :: sigma
       INTEGER(C_INT), INTENT(OUT):: ierr
 

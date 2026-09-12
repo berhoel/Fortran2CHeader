@@ -36,3 +36,4 @@ venv/
 /src/dnvgl/fortran2cheader/testing/.coverage
 /uv.lock
 /docs/_build/
+**/.coverage

@@ -15,7 +15,14 @@ from dnvgl.fortran2cheader import (
     Fortran2CHeader,
 )
 
-from .samples import sample_001, sample_002, sample_003, sample_004
+from .samples import (
+    sample_001,
+    sample_002,
+    sample_003,
+    sample_004,
+    sample_005,
+    sample_006,
+)
 
 
 @pytest.fixture
@@ -40,23 +47,23 @@ SIMPLE_DATA: list[tuple[str, dict[str, str | None]]] = [
         },
     ),
     (
-        "character(kind=c_char), intent(in) :: s(*)",
+        "character(kind=c_char), intent(in), dimension(*) :: s",
         {
-            "kind": "c_char",
             "ftype": "character",
-            "args": "s",
-            "modifier": ", intent(in) ",
+            "kind": "c_char",
             "length": None,
+            "modifier": ", intent(in), dimension(*) ",
+            "args": "s",
         },
     ),
     (
-        "character(kind=c_char,len=1), intent(in) :: s(*)",
+        "character(kind=c_char,len=1), intent(in), dimension(*) :: s",
         {
-            "kind": "c_char",
             "ftype": "character",
-            "args": "s",
-            "modifier": ", intent(in) ",
+            "kind": "c_char",
             "length": "1",
+            "modifier": ", intent(in), dimension(*) ",
+            "args": "s",
         },
     ),
     (
@@ -69,6 +76,26 @@ SIMPLE_DATA: list[tuple[str, dict[str, str | None]]] = [
             "length": "1",
         },
     ),
+    (
+        "REAL(C_DOUBLE), INTENT(IN), DIMENSION(n + n + m) :: temp",
+        {
+            "ftype": "REAL",
+            "kind": "C_DOUBLE",
+            "length": None,
+            "modifier": ", INTENT(IN), DIMENSION(n + n + m) ",
+            "args": "temp",
+        },
+    ),
+    (
+        "REAL(C_DOUBLE), INTENT(IN), DIMENSION(n) :: temp",
+        {
+            "ftype": "REAL",
+            "kind": "C_DOUBLE",
+            "length": None,
+            "modifier": ", INTENT(IN), DIMENSION(n) ",
+            "args": "temp",
+        },
+    ),
 ]
 
 
@@ -78,22 +105,82 @@ def test_simple_1(sample: str, reference: dict[str, str | None]):
     assert (res is not None) and res.groupdict() == reference
 
 
-def test_args_re_1():
-    assert re.compile(_ARGS, re.VERBOSE).match("(s)")
+@pytest.mark.parametrize(
+    argnames=("specimen", "expected"), argvalues=[("(s)", {"args": "s"})]
+)
+def test_args_re_1(specimen, expected):
+    probe = re.compile(_ARGS, re.VERBOSE | re.IGNORECASE).match(specimen)
+    assert probe is not None
+    assert probe.groupdict() == expected
 
 
-def test_bind_re_1():
-    assert re.compile(_BIND, re.VERBOSE).match("bind(c,name='pstr')")
+@pytest.mark.parametrize(
+    argnames=("specimen", "expected"),
+    argvalues=[
+        ("bind(c,name='pstr')", {"C": "c", "c_name": "pstr", "quot": "'"}),
+        ("BIND(c, name='pstr')", {"C": "c", "c_name": "pstr", "quot": "'"}),
+    ],
+)
+def test_bind_re_1(specimen, expected):
+    probe = re.compile(_BIND, re.VERBOSE | re.IGNORECASE).match(specimen)
+    assert probe is not None
+    assert probe.groupdict() == expected
 
 
-def test_subr_re_1():
-    assert _SUBROUTINE.match("subroutine pstr(s) bind(c,name='pstr')")
+@pytest.mark.parametrize(
+    argnames=("specimen", "expected"),
+    argvalues=[
+        (
+            "subroutine pstr(s) bind(c,name='pstr')",
+            {
+                "f_name": "pstr",
+                "args": "s",
+                "C": "c",
+                "quot": "'",
+                "c_name": "pstr",
+            },
+        )
+    ],
+)
+def test_subr_re_1(specimen, expected):
+    probe = _SUBROUTINE.match(specimen)
+    assert probe is not None
+    assert probe.groupdict() == expected
 
 
-def test_function_re_1():
-    assert _FUNCTION.match(
-        "FUNCTION curv2(t, n, x, y, yp, sigma) RESULT(res) BIND(C, NAME='c_curv2')"
-    )
+@pytest.mark.parametrize(
+    argnames=("specimen", "expected"),
+    argvalues=[
+        (
+            "FUNCTION curv2(t, n, x, y, yp, sigma) RESULT(res) BIND(C, NAME='c_curv2')",
+            {
+                "C": "C",
+                "args": "t, n, x, y, yp, sigma",
+                "c_name": "c_curv2",
+                "f_name": "curv2",
+                "prefix": None,
+                "quot": "'",
+                "result": "res",
+            },
+        ),
+        (
+            "FUNCTION pstr(s) RESULT(x) BIND(c, name='pstr')",
+            {
+                "C": "c",
+                "args": "s",
+                "c_name": "pstr",
+                "f_name": "pstr",
+                "prefix": None,
+                "quot": "'",
+                "result": "x",
+            },
+        ),
+    ],
+)
+def test_function_re_1(specimen, expected):
+    probe = _FUNCTION.match(specimen)
+    assert probe is not None
+    assert probe.groupdict() == expected
 
 
 @pytest.mark.parametrize(
@@ -103,6 +190,8 @@ def test_function_re_1():
         (sample_002.I_DATA, sample_002.EXP, sample_002.EXP_PXD),
         (sample_003.I_DATA, sample_003.EXP, sample_003.EXP_PXD),
         (sample_004.I_DATA, sample_004.EXP, sample_004.EXP_PXD),
+        (sample_005.I_DATA, sample_005.EXP, sample_005.EXP_PXD),
+        (sample_006.I_DATA, sample_006.EXP, sample_006.EXP_PXD),
     ],
 )
 def test_subr_2(

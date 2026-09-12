@@ -101,35 +101,14 @@ __email__ = "berhoel@gmail.com"
 _CONSOLE = Console()
 
 
-def casi(inp: str) -> str:
-    """Make string for case insenitive regular expression string.
-
-    Example::
-
-      >>> casi('abc') == '[aA][bB][cC]'
-      True
-    """
-    outp: list[str] = []
-    letter = re.compile(r"^\w$")
-    whitespace = re.compile(r"^\s$")
-    for char in inp:
-        if letter.match(char):
-            outp.extend(("[", char.lower(), char.upper(), "]"))
-        elif whitespace.match(char):
-            outp.append("\\s")
-        else:
-            outp.append(char)
-    return "".join(outp)
-
-
 # SUBROUTINE SXFGeRh (iUnit, oRelName, oNoOAttr, oNoORows, oAttName,
 #                     oAttType, oAttLeng) BIND(C,NAME="SXFGeRh")
-_BIND = rf"""{casi("BIND")}
+_BIND = r"""BIND
 \( \s*
 (?:
   (?:
     (?P<C>[Cc]) |
-    (?:{casi("NAME")})\s* =
+    (?:NAME)\s* =
        \s*(?P<quot>[\'\"])(?P<c_name>[\w]+)(?P=quot)
   ) \s* ,? \s*
 )+
@@ -144,10 +123,10 @@ _ARGS = (
 _SUBROUTINE = re.compile(
     rf"""
 ^
-(?: {casi("SUBROUTINE")} ) \s+
+(?: SUBROUTINE ) \s+
 (?P<f_name> \w+ ) \s*
 {_ARGS}{_BIND}""",
-    re.VERBOSE,
+    re.VERBOSE | re.IGNORECASE,
 )
 
 # FUNCTION C_CALLOC(elt_count, elt_size) RESULT(ptr) BIND(C, NAME="calloc")
@@ -155,64 +134,66 @@ _FUNCTION = re.compile(
     rf"""
 ^
 (?P<prefix>.+)?? \s*
-(?: {casi("FUNCTION")} ) \s+
+(?: FUNCTION ) \s+
 (?P<f_name> \w+ ) \s*
 {_ARGS}
-(?: {casi("RESULT")} \s*
+(?: RESULT \s*
 [(] \s* (?P<result> .+? ) [)] ) \s*
 {_BIND}""",
-    re.VERBOSE | re.MULTILINE,
+    re.VERBOSE | re.MULTILINE | re.IGNORECASE,
 )
 # INTEGER(C_INT), INTENT(IN), VALUE :: iUnit
 _VARTYPE = re.compile(
-    rf"""
+    r"""
+
 ^
 (?P<ftype>
-  (?: {casi("INTEGER")} ) |
-  (?: {casi("REAL")} ) |
-  (?: {casi("COMPLEX")} ) |
-  (?: {casi("LOGICAL")} ) |
-  (?: {casi("CHARACTER")} ) |
-  (?: {casi("TYPE")} )
+  (?: INTEGER ) |
+  (?: REAL ) |
+  (?: COMPLEX ) |
+  (?: LOGICAL ) |
+  (?: CHARACTER ) |
+  (?: TYPE )
 )
 \( \s*
   (?:
     (?:
-      (?: (?: {casi("KIND=")} )? (?P<kind> [\w\d]+ ) )? |
-      (?: (?: {casi("LEN=")} ) (?P<length> [\d]+ ) )?
+      (?: (?: KIND= )? (?P<kind> [\w\d]+ ) )? |
+      (?: (?: LEN= ) (?P<length> [\s\+\*\d]+ ) )?
     ) \s* ,?
   )*
 \s* \) \s*
-(?P<modifier> (?: , \s* [*\w()]+ \s* )+ )? :: \s*
-(?P<args> (?: [\w]+ \s* ,? \s* )* )
+(?P<modifier> (?: , \s* \w+ \s* (?:\([,\*\+\-\w\s]+\))? \s* )+ )?
+ :: \s*
+(?P<args> (?: [\w]+ \s* ,? \s* )* )$
 """,
-    re.VERBOSE,
+    re.VERBOSE | re.IGNORECASE,
 )
 
 _INTENT = re.compile(
-    rf""".*{casi("intent")}\s*\(\s*(?P<dir>
-(?:{casi("IN")})|
-(?:{casi("OUT")})|
-(?:{casi("INOUT")})|
-(?:{casi("IN,OUT")}))\s*\).*""",
-    re.VERBOSE,
+    r""".*intent\s*\(\s*(?P<dir>
+(?:IN)|
+(?:OUT)|
+(?:INOUT)|
+(?:IN,OUT))\s*\).*""",
+    re.VERBOSE | re.IGNORECASE,
 )
 
 _TYPE = re.compile(
-    rf"""(?P<ftype>
-  (?: {casi("INTEGER")} ) |
-  (?: {casi("REAL")} ) |
-  (?: {casi("COMPLEX")} ) |
-  (?: {casi("LOGICAL")} ) |
-  (?: {casi("CHARACTER")} ) |
-  (?: {casi("TYPE")} )
+    r"""(?P<ftype>
+  (?: INTEGER ) |
+  (?: REAL ) |
+  (?: COMPLEX ) |
+  (?: LOGICAL ) |
+  (?: CHARACTER ) |
+  (?: TYPE )
 )
 \( \s* (?P<kind> [\w\d=]+ ) \s* \)""",
-    re.VERBOSE,
+    re.VERBOSE | re.IGNORECASE,
 )
 
-_INTERFACE = re.compile(rf"^{casi('INTERFACE')}$")
-_END_INTERFACE = re.compile(rf"^{casi('END INTERFACE')}$")
+_INTERFACE = re.compile(r"^INTERFACE$")
+_END_INTERFACE = re.compile(r"^END INTERFACE$")
 
 
 def file_newer(new: Path, old: Path) -> bool:
@@ -509,7 +490,12 @@ class Fortran2CHeader:
                 interface = True
             elif _END_INTERFACE.match(i):
                 interface = False
-            elif not interface and subr and vartype and vartype.groupdict()["kind"]:
+            elif (
+                not interface
+                and subr
+                and (vartype is not None)
+                and (vartype.groupdict()["kind"] is not None)
+            ):
                 gdict = vartype.groupdict()
                 subr.add_arg(
                     args=gdict["args"],

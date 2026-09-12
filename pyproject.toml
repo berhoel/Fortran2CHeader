@@ -2,7 +2,7 @@
 
 name = "Fortran2CHeader"
 
-version = "0.6.3"
+version = "0.6.4"
 
 description = "Generate a C/C++ header file from a Fortran source file."
 
